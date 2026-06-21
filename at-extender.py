@@ -18,7 +18,7 @@ except ImportError:
 from playwright.sync_api import sync_playwright, TimeoutError
 
 def is_low_memory():
-    #Erkennt schwache Server (unter 2 GB RAM)
+    #Erkennt schwache Server (unter 2 GB RAM)
     total_ram = psutil.virtual_memory().total / (1024**3)
     return total_ram <= 2.0
 
@@ -379,6 +379,7 @@ def login_and_check_data():
     global LAST_GB
     with sync_playwright() as p:
         for attempt in range(3):  # 3 Versuche, falls Playwright abstürzt
+            browser = None
             try:
                 COOKIE_FILE = os.path.join(DATA_DIR, "cookies.json")
                 logging.info(f"Starte {BROWSER}...")
@@ -488,7 +489,7 @@ def login_and_check_data():
 
                 interval = get_interval(config)
 
-if GB < 1.0:
+                if GB < 1.0:
                     logging.info("Versuche, 1 GB Datenvolumen nachzubuchen...")
 
                     clicked = False
