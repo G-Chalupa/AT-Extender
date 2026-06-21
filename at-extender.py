@@ -488,63 +488,26 @@ def login_and_check_data():
 
                 interval = get_interval(config)
 
-                if GB < 1.0:
+if GB < 1.0:
                     logging.info("Versuche, 1 GB Datenvolumen nachzubuchen...")
 
-                    if is_community_plus:
-                        selectors = [
-                            'one-stack.usage-meter:nth-child(2) > one-usage-meter:nth-child(1) > one-button:nth-child(3)',
-                            'one-stack.usage-meter:nth-child(2) > one-stack:nth-child(1) > one-usage-meter:nth-child(1) > one-button:nth-child(3)'
-                        ]
-                    else:
-                        selectors = [
-                            'one-stack.usage-meter:nth-child(1) > one-usage-meter:nth-child(1) > one-button:nth-child(3)',
-                            'one-stack.usage-meter:nth-child(1) > one-stack:nth-child(1) > one-usage-meter:nth-child(1) > one-button:nth-child(3)'
-                        ]
-
                     clicked = False
-                    for selector in selectors:
-                        try:
-                            elements = page.query_selector_all(selector)
-                            for button in elements:
-                                if not button or not button.is_visible():
-                                    continue
-                                text = button.text_content().strip()
-                                if "1 GB" in text or "1 GB" in text:
-                                    if wait_and_click(page, selector):
-                                        logging.info(f"Nachbuchungsbutton geklickt über Selector: {selector}")
-                                        message = f"{RUFNUMMER}: Aktuelles Datenvolumen: {GB:.2f} GB – 1 GB wurde erfolgreich nachgebucht. 📲"
-                                        send_telegram_message(message)
-                                        clicked = True
-                                        break
-                            if clicked:
-                                break
-                        except Exception as e:
-                            logging.warning(f"Fehler beim klicken: {e}")
+                    try:
+                        btn = page.query_selector('one-button[slot="action"][circle]:has(one-icon[name="plus"])')
+                        if btn and btn.is_visible():
+                            text = btn.text_content().strip()
+                            logging.info(f"Topup-Button gefunden mit Text '{text}', klicke...")
+                            btn.click()
+                            clicked = True
+                            message = f"{RUFNUMMER}: Aktuelles Datenvolumen: {GB:.2f} GB – 1 GB wurde erfolgreich nachgebucht. 📲"
+                            send_telegram_message(message)
+                        else:
+                            logging.warning("Topup-Button nicht sichtbar oder nicht gefunden.")
+                    except Exception as e:
+                        logging.warning(f"Fehler beim Klicken des Topup-Buttons: {e}")
 
                     if not clicked:
-                        logging.info("Button nicht gefunden, Seite wird durchsuchst...")
-                        try:
-                            all_buttons = page.query_selector_all("one-button")
-                            for btn in all_buttons:
-                                try:
-                                    if not btn or not btn.is_visible():
-                                        continue
-                                    text = btn.text_content().strip()
-                                    logging.debug(f"Button-Text beim Durchlauf: {text}")
-                                    if "1 GB" in text or "1 GB" in text:
-                                        btn.click()
-                                        logging.info("Fallback erfolgreich.")
-                                        send_telegram_message(f"{RUFNUMMER}: Über Trick17 1 GB nachgebucht. 📲")
-                                        clicked = True
-                                        break
-                                except Exception:
-                                    continue
-                        except Exception as fallback_error:
-                            logging.warning(f"Fehler bei der Fallback Suche: {fallback_error}")
-
-                    if not clicked:
-                        raise Exception("Kein gültiger 1 GB Button gefunden – auch Fallback versagte.")
+                        raise Exception("Kein gültiger Topup-Button gefunden.")
 
                 else:
                     logging.info(f"Aktuelles Datenvolumen: {GB:.2f} GB")
