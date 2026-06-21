@@ -244,6 +244,20 @@ def wait_and_click(page, selector, timeout=5000, retries=5):
     logging.error(f"Konnte {selector} nicht klicken.")
     return False
 
+def click_by_text(page, text, timeout=5000, retries=5):
+    for attempt in range(retries):
+        try:
+            logging.info(f"Versuche, Button mit Text '{text}' zu klicken (Versuch {attempt+1}/{retries})...")
+            btn = page.get_by_text(text, exact=True).first
+            btn.wait_for(timeout=timeout)
+            btn.click()
+            return True
+        except Exception:
+            logging.warning(f"Button mit Text '{text}' nicht gefunden. Neuer Versuch...")
+            time.sleep(1)
+    logging.error(f"Konnte Button mit Text '{text}' nicht klicken.")
+    return False
+
 def handle_cookie_banner(page):
     try:
         deny_selector = 'button[data-testid="uc-deny-all-button"]'
@@ -426,7 +440,7 @@ def login_and_check_data():
                     page.fill('#input-5', RUFNUMMER)
                     page.fill('#input-6', PASSWORT)
 
-                    if not wait_and_click(page, '[class="button button--solid button--medium button--color-default button--has-label"]'):
+                    if not click_by_text(page, "Anmelden"):
                         raise Exception("Login-Button konnte nicht geklickt werden.")
 
                     logging.info("Warte auf Login...")
@@ -454,7 +468,7 @@ def login_and_check_data():
                         page.fill('#input-5', RUFNUMMER)
                         page.fill('#input-6', PASSWORT)
 
-                        if not wait_and_click(page, '[class="button button--solid button--medium button--color-default button--has-label"]'):
+                        if not click_by_text(page, "Anmelden"):
                             raise Exception("Fallback-Login: Login-Button konnte nicht geklickt werden.")
 
                         logging.info("Warte auf Login... (Fallback)")
